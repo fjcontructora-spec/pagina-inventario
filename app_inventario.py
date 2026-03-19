@@ -103,17 +103,21 @@ def conectar_db():
     return create_engine(url)
 
 # 4. CARGA DE DATOS
+# --- 4. CARGA DE DATOS ---
 try:
     engine = conectar_db()
-    # Traemos los datos de la tabla (o de la vista si la creamos luego)
+    
+    # Hemos cambiado 'f.recurso_id' por 'f.id_recurso' 
+    # asumiendo que ese es el nombre real en tu tabla
     query = """
     SELECT 
+        f.id, 
         f.cantidad, 
         f.fecha, 
         d.nombre_recurso, 
         d.unidad_medida
     FROM fact_fisico f
-    JOIN dim_recurso d ON f.recurso_id = d.id_recurso
+    JOIN dim_recurso d ON f.id_recurso = d.id_recurso
     """
     df = pd.read_sql(query, engine)
     

@@ -144,36 +144,33 @@ try:
 
     st.divider()
 
-    # 6. TABLA INTERACTIVA
+# --- 6. TABLA INTERACTIVA Y EDICIÓN ---
     st.subheader("📝 Edición de Inventario")
     
-    # Configuramos la tabla para que se vea bonita
-    st.data_editor(
+    # IMPORTANTE: Aquí asignamos el resultado a df_editado
+    df_editado = st.data_editor(
         df,
-        use_container_width=True, # Que ocupe todo el ancho
-        hide_index=True,          # Quitar la columna de números de la izquierda
-        key="editor_inventario", # Una clave para que Streamlit lo rastree
-
+        use_container_width=True,
+        hide_index=True,
+        key="editor_inventario",
         column_config={
             "cantidad": st.column_config.NumberColumn("Cantidad Actual", format="%d 📦"),
             "fecha": st.column_config.DateColumn("Última Sincronización"),
             "recurso_id": "Identificador de Recurso"
-            
         }
     )
-    
 
-# --- BOTÓN DE GUARDADO ---
+    # El botón de guardar debe estar ALINEADO con el st.data_editor
     if st.button("💾 Guardar cambios en SQL"):
         try:
-            # Usamos 'to_sql' para reemplazar la tabla con los nuevos datos
-            # 'if_exists="replace"' borra la tabla vieja y pone la nueva editada
+            # Por ahora usamos replace para probar, luego lo afinamos
             df_editado.to_sql('fact_fisico', engine, if_exists='replace', index=False)
-            
-            st.success("✅ ¡Cambios guardados exitosamente en Supabase!")
-            st.balloons() # Un pequeño festejo visual
-        
-    except Exception as e:
-        st.error(f"❌ Error al guardar: {e}")
+            st.success("✅ ¡Base de Datos actualizada! Ya puedes refrescar Power BI.")
+            st.balloons()
+        except Exception as error_guardado:
+            st.error(f"Error al escribir en SQL: {error_guardado}")
+
 except Exception as e:
-    st.error(f"Error al conectar con la base de datos: {e}")
+    # Este es el except que fallaba, asegúrate de que esté alineado al 'try' inicial
+    st.error(f"Error de conexión: {e}")
+

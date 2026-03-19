@@ -50,34 +50,36 @@ AZUL_CFJ = "#0169A4"
 VERDE_CFJ = "#00B04F"
 FONDO_PROFUNDIDAD = "#F4F7F9"
 # 2. ESTILO VISUAL (Para que se vea más limpio)
-st.markdown(f"""
+# --- DISEÑO UI/UX AVANZADO ---
+st.markdown("""
     <style>
-    /* Fondo de la aplicación */
-    .stApp {{
-        background-color: {FONDO_PROFUNDIDAD};
-    }}
+    /* Fondo general con profundidad */
+    .stApp {
+        background-color: #F4F7F9;
+    }
     
-    /* Estilo de las métricas (Tarjetas blancas con borde verde) */
-    div[data-testid="metric-container"] {{
-        background-color: #ffffff;
-        border-left: 5px solid {VERDE_CFJ}; /* Detalle en verde */
+    /* Tarjetas blancas con sombra para los datos */
+    [data-testid="stMetric"] {
+        background-color: white;
         padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }}
-    
-    /* Títulos en Azul */
-    h1, h2, h3 {{
-        color: {AZUL_CFJ} !important;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }}
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        border-left: 6px solid #00B04F; /* Detalle verde FJ */
+    }
 
-    /* Botones y detalles interactivos */
-    .stButton>button {{
-        background-color: {AZUL_CFJ};
-        color: white;
-        border-radius: 5px;
-    }}
+    /* Estilo del Editor de Datos (Tabla) */
+    .stDataFrame {
+        background-color: white;
+        padding: 10px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    /* Títulos con fuente más limpia */
+    h1, h2, h3 {
+        color: #0169A4; /* Azul FJ */
+        font-weight: 700;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -102,22 +104,21 @@ def conectar_db():
     url = f"postgresql://{usuario}:{clave}@{host}:{puerto}/{db}"
     return create_engine(url)
 
-# 4. CARGA DE DATOS
 # --- 4. CARGA DE DATOS ---
 try:
     engine = conectar_db()
     
-    # Hemos cambiado 'f.recurso_id' por 'f.id_recurso' 
-    # asumiendo que ese es el nombre real en tu tabla
+    # Usamos comillas dobles por las mayúsculas en los nombres de las columnas
     query = """
     SELECT 
-        f.id, 
-        f.cantidad, 
-        f.fecha, 
-        d.nombre_recurso, 
-        d.unidad_medida
+        f."Recurso", 
+        d."Nombre_Material", 
+        d."Unidad",
+        f."SALDO_SISTEMA", 
+        f."STOCK_FISICO", 
+        f."DIFERENCIA_UNIDADES"
     FROM fact_fisico f
-    JOIN dim_recurso d ON f.id_recurso = d.id_recurso
+    JOIN dim_recurso d ON f."Recurso" = d."Recurso"
     """
     df = pd.read_sql(query, engine)
     
@@ -149,21 +150,20 @@ try:
     st.divider()
 
 # --- 6. TABLA INTERACTIVA Y EDICIÓN ---
-    st.subheader("📝 Edición de Inventario")
-    
-    # IMPORTANTE: Aquí asignamos el resultado a df_editado
-    df_editado = st.data_editor(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        key="editor_inventario",
-        column_config={
-            "cantidad": st.column_config.NumberColumn("Cantidad Actual", format="%d 📦"),
-            "fecha": st.column_config.DateColumn("Última Sincronización"),
-            "recurso_id": "Identificador de Recurso"
-        }
-    )
+    st.subheader("📋 Control de Stock Físico")
 
+df_editado = st.data_editor(
+    df,
+    use_container_width=True,
+    hide_index=True,
+    column_config={
+        "Recurso": st.column_config.TextColumn("ID Recurso", disabled=True),
+        "Nombre_Material": st.column_config.TextColumn("Descripción", width="large"),
+        "Unidad": st.column_config.TextColumn("U.M.", width="small"),
+        "STOCK_FISICO": st.column_config.NumberColumn("Conteo Físico", format="%.2f 🛠️", help="Ingresa el conteo real de bodega"),
+        "SALDO_SISTEMA": st.column_config.NumberColumn("Saldo Teórico", disabled=True)
+    }
+)
     # El botón de guardar debe estar ALINEADO con el st.data_editor
     if st.button("💾 Guardar cambios en SQL"):
         try:

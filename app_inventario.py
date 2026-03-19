@@ -152,18 +152,18 @@ try:
 # --- 6. TABLA INTERACTIVA Y EDICIÓN ---
     st.subheader("📋 Control de Stock Físico")
 
-df_editado = st.data_editor(
-    df,
-    use_container_width=True,
-    hide_index=True,
-    column_config={
-        "Recurso": st.column_config.TextColumn("ID Recurso", disabled=True),
-        "Nombre_Material": st.column_config.TextColumn("Descripción", width="large"),
-        "Unidad": st.column_config.TextColumn("U.M.", width="small"),
-        "STOCK_FISICO": st.column_config.NumberColumn("Conteo Físico", format="%.2f 🛠️", help="Ingresa el conteo real de bodega"),
-        "SALDO_SISTEMA": st.column_config.NumberColumn("Saldo Teórico", disabled=True)
-    }
-)
+    df_editado = st.data_editor(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Recurso": st.column_config.TextColumn("ID Recurso", disabled=True),
+            "Nombre_Material": st.column_config.TextColumn("Descripción", width="large"),
+            "Unidad": st.column_config.TextColumn("U.M.", width="small"),
+            "STOCK_FISICO": st.column_config.NumberColumn("Conteo Físico", format="%.2f 🛠️", help="Ingresa el conteo real de bodega"),
+            "SALDO_SISTEMA": st.column_config.NumberColumn("Saldo Teórico", disabled=True)
+        }
+    )
     # El botón de guardar debe estar ALINEADO con el st.data_editor
     if st.button("💾 Guardar cambios en SQL"):
         try:

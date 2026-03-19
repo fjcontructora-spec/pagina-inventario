@@ -116,7 +116,9 @@ try:
         d."Unidad",
         f."SALDO_SISTEMA", 
         f."STOCK_FISICO", 
-        f."DIFERENCIA_UNIDADES"
+        f."DIFERENCIA_UNIDADES",
+        f."MES",
+        F."AÑO"
     FROM fact_fisico f
     JOIN dim_recurso d ON f."Recurso" = d."Recurso"
     """
@@ -151,6 +153,47 @@ try:
 
     st.divider()
 
+    # --- FILTROS DE PERIODO ---
+    st.subheader("📅 Selección de Inventario")
+    col_mes, col_anio = st.columns(2)
+    
+    with col_mes:
+        # Obtenemos los meses únicos que existen en tu base de datos
+        lista_meses = sorted(df['MES'].unique())
+        mes_seleccionado = st.selectbox("Selecciona el Mes", lista_meses)
+    
+    with col_anio:
+        # Obtenemos los años únicos
+        lista_anios = sorted(df['AÑO'].unique(), reverse=True)
+        anio_seleccionado = st.selectbox("Selecciona el Año", lista_anios)
+    
+    # APLICAMOS EL FILTRO DE PERIODO
+    df_filtrado = df[(df['MES'] == mes_seleccionado) & (df['AÑO'] == anio_seleccionado)]
+
+    # --- BUSCADOR (Sobre los datos del periodo seleccionado) ---
+    busqueda = st.text_input("🔍 Buscar en este periodo...", placeholder="Nombre o código...")
+    
+    if busqueda:
+        filtro_nombre = df_filtrado['Nombre_Material'].astype(str).str.contains(busqueda, case=False, na=False)
+        filtro_codigo = df_filtrado['Recurso'].astype(str).str.contains(busqueda, case=False, na=False)
+        df_filtrado = df_filtrado[filtro_nombre | filtro_codigo]
+    
+    # --- TABLA EDITABLE ---
+    st.write(f"### Mostrando: {mes_seleccionado} - {anio_seleccionado}")
+    
+    df_editado = st.data_editor(
+        df_filtrado,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "MES": st.column_config.TextColumn("Mes", disabled=True),
+            "AÑO": st.column_config.TextColumn("Año", disabled=True),
+            "Recurso": st.column_config.TextColumn("ID", disabled=True),
+            "STOCK_FISICO": st.column_config.NumberColumn("Conteo Físico", format="%.2f")
+        }
+    )
+
+        
 # --- 6. TABLA INTERACTIVA Y EDICIÓN ---
     st.subheader("📋 Control de Stock Físico")
 

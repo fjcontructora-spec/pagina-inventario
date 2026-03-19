@@ -152,7 +152,7 @@ try:
         df,
         use_container_width=True, # Que ocupe todo el ancho
         hide_index=True,          # Quitar la columna de números de la izquierda
-        key="editor_inventario" # Una clave para que Streamlit lo rastree
+        key="editor_inventario", # Una clave para que Streamlit lo rastree
 
         column_config={
             "cantidad": st.column_config.NumberColumn("Cantidad Actual", format="%d 📦"),

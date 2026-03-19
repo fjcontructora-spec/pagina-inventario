@@ -5,9 +5,46 @@ from sqlalchemy import create_engine
 # 1. CONFIGURACIÓN DE LA PÁGINA (Esto le da el look ancho y el título en la pestaña)
 st.set_page_config(
     page_title="Inventario FJ - Gestión Local",
-    page_icon="🏗️",
+    page_icon="constructora-fj-s-a.png",
     layout="wide"
 )
+
+def check_password():
+    """Devuelve True si el usuario ingresó la contraseña correcta."""
+
+    def password_entered():
+        """Verifica si la contraseña ingresada coincide."""
+        if st.session_state["username"] == st.secrets["admin_user"] and \
+           st.session_state["password"] == st.secrets["admin_password"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # No guardar la contraseña en sesión
+            del st.session_state["username"]
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # Primera vez, mostrar el formulario
+        st.title("🔒 Acceso Restringido - Constructora FJ")
+        st.text_input("Usuario", on_change=password_entered, key="username")
+        st.text_input("Contraseña", type="password", on_change=password_entered, key="password")
+        return False
+    
+    elif not st.session_state["password_correct"]:
+        # Contraseña incorrecta, volver a mostrar el formulario con error
+        st.error("😕 Usuario o contraseña incorrectos")
+        st.text_input("Usuario", on_change=password_entered, key="username")
+        st.text_input("Contraseña", type="password", on_change=password_entered, key="password")
+        return False
+    
+    else:
+        # Todo bien
+        return True
+
+# --- LÓGICA DE CONTROL DE ACCESO ---
+if check_password():
+    # AQUÍ VA TODO EL RESTO DE TU CÓDIGO (Títulos, Tablas, Logo, etc.)
+    st.success("Bienvenido al sistema")
+    # ... todo lo que ya tenemos ...
 
 AZUL_CFJ = "#0169A4"
 VERDE_CFJ = "#00B04F"
@@ -69,7 +106,16 @@ def conectar_db():
 try:
     engine = conectar_db()
     # Traemos los datos de la tabla (o de la vista si la creamos luego)
-    df = pd.read_sql("SELECT * FROM fact_fisico", engine)
+    query = """
+    SELECT 
+        f.cantidad, 
+        f.fecha, 
+        d.nombre_recurso, 
+        d.unidad_medida
+    FROM fact_fisico f
+    JOIN dim_recurso d ON f.recurso_id = d.id_recurso
+    """
+    df = pd.read_sql(query, engine)
     
     # --- TÍTULO Y BUSCADOR ---
     st.title("🏗️ Inventario General - Constructora FJ")
@@ -99,19 +145,35 @@ try:
     st.divider()
 
     # 6. TABLA INTERACTIVA
-    st.subheader("📋 Detalle de Existencias")
+    st.subheader("📝 Edición de Inventario")
     
     # Configuramos la tabla para que se vea bonita
-    st.dataframe(
+    st.data_editor(
         df,
         use_container_width=True, # Que ocupe todo el ancho
         hide_index=True,          # Quitar la columna de números de la izquierda
+        key="editor_inventario" # Una clave para que Streamlit lo rastree
+
         column_config={
             "cantidad": st.column_config.NumberColumn("Cantidad Actual", format="%d 📦"),
             "fecha": st.column_config.DateColumn("Última Sincronización"),
             "recurso_id": "Identificador de Recurso"
+            
         }
     )
+    
 
+# --- BOTÓN DE GUARDADO ---
+    if st.button("💾 Guardar cambios en SQL"):
+        try:
+            # Usamos 'to_sql' para reemplazar la tabla con los nuevos datos
+            # 'if_exists="replace"' borra la tabla vieja y pone la nueva editada
+            df_editado.to_sql('fact_fisico', engine, if_exists='replace', index=False)
+            
+            st.success("✅ ¡Cambios guardados exitosamente en Supabase!")
+            st.balloons() # Un pequeño festejo visual
+        
+    except Exception as e:
+        st.error(f"❌ Error al guardar: {e}")
 except Exception as e:
     st.error(f"Error al conectar con la base de datos: {e}")

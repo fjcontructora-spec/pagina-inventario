@@ -56,11 +56,11 @@ with col_titulo:
 # 3. FUNCIÓN DE CONEXIÓN (La mantenemos igual pero organizada)
 def conectar_db():
     # RECUERDA: Reemplaza 'TU_CLAVE' por la real de Supabase
-    usuario = "postgres.ikgqwlnuinegkmlogalv"
-    clave = "ll0iJsOa9ZgYStwe" 
-    host = "aws-1-sa-east-1.pooler.supabase.com"
-    puerto = "6543"
-    db = "postgres"
+    usuario = st.secrets["db_user"]
+    clave = st.secrets["db_password"]
+    host = st.secrets["db_host"]
+    puerto = st.secrets["db_port"]
+    db = st.secrets["db_name"]
     
     url = f"postgresql://{usuario}:{clave}@{host}:{puerto}/{db}"
     return create_engine(url)

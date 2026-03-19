@@ -132,7 +132,9 @@ try:
 
     # Filtrar el dataframe según la búsqueda
     if busqueda:
-        df = df[df['recurso_id'].astype(str).str.contains(busqueda, case=False)]
+        filtro_nombre = df['Nombre_Material'].astype(str).str.contains(busqueda, case=False, na=False)
+        filtro_codigo = df['Recurso'].astype(str).str.contains(busqueda, case=False, na=False)
+    df = df[filtro_nombre | filtro_codigo]
 
     # 5. PANEL DE MÉTRICAS (Los numeritos de arriba)
     st.subheader("Resumen de Bodega")
